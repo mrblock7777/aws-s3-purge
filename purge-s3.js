@@ -10,10 +10,15 @@ module.exports = class PurgeS3 {
     }
 
     async listBuckets(keyword) {
+        console.log('Getting list of bucket(s) to be deleted...\n')
+
         const s3Res = await s3.listBuckets().promise();
         const buckets = s3Res.Buckets;
-        const filteredBuckets = buckets.filter(bucket => bucket.Name.includes(keyword));
-
-        console.log(filteredBuckets);
+        const filteredBuckets = buckets.filter(bucket => bucket.Name.includes(keyword)).map(bucket => bucket.Name);
+        const bucketNumber = filteredBuckets.length;
+        filteredBuckets.forEach(bucket => {
+            console.log(bucket);
+        });
+        console.log(`\n${bucketNumber} bucket${bucketNumber > 1 ? 's' : ''} to be deleted`)
     }
 }
