@@ -11,7 +11,7 @@ module.exports = class PurgeS3 {
     constructor({ keyword, force = false, dryrun = false }) {
         this.listBuckets(keyword).then(buckets => {
             if (dryrun) return;
-            const response = prompt('Do you want to continue? (y/n)');
+            const response = prompt('Do you want to continue? (y/n) ');
             if (!['y', 'yes'].includes(response.toLowerCase())) return;
             if (!force) console.log('--force flag is false. Will not delete non-empty buckets');
             this.deleteBuckets(buckets, force);
@@ -39,33 +39,55 @@ module.exports = class PurgeS3 {
         let deleteCount = 0;
         const currentBuckets = force ? buckets : await this.getEmptyBuckets(buckets);
         for (const bucket of currentBuckets) {
-            console.log('\nDeleting bucket ' + bucket + '...');
+            console.log('\nDeleting bucket \"' + bucket + '\"...');
             try {
                 await s3.deleteBucket({
                     Bucket: bucket
                 }).promise()
+                console.log('Bucket ' + bucket + ' deleted'.blue);
+                deleteCount++;
             }
             catch (e) {
                 if (e.code === 'BucketNotEmpty') {
+                    console.log('\nBucket not empty. Emptying bucket...'.yellow)
                     const listObjectRes = await s3.listObjectsV2({
                         Bucket: bucket
                     }).promise()
+
                     const objects = listObjectRes.Contents
-                    for (const object in objects) {
+
+                    for (const object of objects) {
+                        console.log(object)
                         await s3.deleteObject({
                             Bucket: bucket,
                             Key: object.Key
                         }).promise()
                     }
+                    // const listVersionRes = await s3.listObjectVersions({
+                    //     Bucket: bucket
+                    // }).promise()
+
+                    // const versions = listVersionRes.Versions
+
+                    // for (const version in versions) {
+                    //     await s3.deleteObject({
+                    //         Bucket: bucket,
+                    //         Key: version.Key
+                    //     }).promise()
+                    // }
+                    console.log('Bucket emptied. Proceed to delete bucket'.green)
+                    await s3.deleteBucket({
+                        Bucket: bucket
+                    }).promise()
+                    console.log('Bucket ' + bucket + ' deleted'.blue);
+                    deleteCount++;
                 }
             }
-            console.log('Bucket ' + bucket + ' deleted'.blue);
-            deleteCount++;
         }
         console.log(`${deleteCount} bucket${deleteCount > 1 ? 's' : ''} deleted`.green)
         if (force) return;
         const nonEmptyBuckets = await this.getNonEmptyBuckets(buckets);
-        console.log(`\n${nonEmptyBuckets.length} bucket${deleteCount > 1 ? 's' : ''} not deleted(Bucket not empty)`.yellow)
+        console.log(`\n${nonEmptyBuckets.length} bucket${deleteCount > 1 ? 's' : ''} not deleted (Bucket not empty)`.yellow)
 
     }
     async getNonEmptyBuckets(buckets) {
