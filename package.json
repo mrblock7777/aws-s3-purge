@@ -1,5 +1,5 @@
 {
-  "name": "aws-s3-purge",
+  "name": "@mrblock/aws-s3-purge",
   "version": "1.0.0",
   "description": "Helper tool to quickly delete AWS S3 buckets",
   "main": "index.js",
