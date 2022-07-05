@@ -10,7 +10,7 @@ module.exports = class PurgeS3 {
 
     constructor({ keyword, force = false, dryrun = false }) {
         this.listBuckets(keyword).then(buckets => {
-            if (dryrun) return;
+            if (dryrun || !buckets.length) return;
             const response = prompt('Do you want to continue? (y/n) ');
             if (!['y', 'yes'].includes(response.toLowerCase())) return;
             if (!force) console.log('--force flag is false. Will not delete non-empty buckets');
@@ -57,11 +57,12 @@ module.exports = class PurgeS3 {
                     const objects = listObjectRes.Contents
 
                     for (const object of objects) {
-                        console.log(object)
+                        console.log(`\nDeleting object ${object.Key}`)
                         await s3.deleteObject({
                             Bucket: bucket,
                             Key: object.Key
                         }).promise()
+                        console.log('Object' + object.Key + 'deleted'.blue)
                     }
                     // const listVersionRes = await s3.listObjectVersions({
                     //     Bucket: bucket
