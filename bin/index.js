@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 const PurgeS3 = require('../purge-s3');
 const { Command } = require('commander');
 
